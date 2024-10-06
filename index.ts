@@ -26,13 +26,15 @@ export const formatTransaction = (t: TransactionDetail | SaveTransaction) =>
 const app = express();
 
 app.get("/amex", async (req, res) => {
-  try {
-    await run();
-    res.send("Imported transactions");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Failed to import transactions");
-  }
+  res.send("Imported transactions");
+
+  setImmediate(async() => {
+    try {
+      await run();
+    } catch (err) {
+      console.error("Failed to import transactions", err);
+    }
+  }) 
 });
 
 app.listen(3000, () => {

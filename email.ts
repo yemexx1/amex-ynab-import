@@ -149,14 +149,6 @@ export class EmailScanner {
           for (const [seqno, email] of emails) {
             if (match(email)) {
               console.log("Found the OTP email");
-              try {
-                await this.deleteEmail(seqno);
-                console.log("Discarded email now that it's cached");
-              } catch (e) {
-                console.error(
-                  `Cannot delete OTP email. Sorry for the spam! ${e}`
-                );
-              }
               imap.end();
               resolve(email);
               return;

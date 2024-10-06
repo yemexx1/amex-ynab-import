@@ -238,8 +238,8 @@ export async function fetchTransactions(): Promise<Account[]> {
       email.subject.indexOf("Ihr temporärer American Express") !== -1
   );
 
-  const email = await Promise.race([timeout(60000 * 5, false), waitForEmail]);
-  if (!email) throw new Error("OTP email was not received within 5 minutes");
+  const email = await Promise.race([timeout(60000, false), waitForEmail]);
+  if (!email) throw new Error("OTP email was not received within 60 seconds");
   mailbox.disconnect();
 
   let code: string | undefined;

@@ -7,8 +7,8 @@ import ynab, {
   TransactionsResponse,
   TransactionDetail,
 } from "ynab";
-import titleize from "titleize";
 import dateFormat from "dateformat";
+import moment from "moment"
 import "dotenv/config";
 import { formatTransaction } from "./index.js";
 
@@ -25,8 +25,25 @@ if (!budgetId) throw new Error("You must provide the YNAB budget ID");
 
 export const ynabAPI = new ynab.API(apiToken);
 
-const ynabAmount = (amount: string) => Math.round(-parseFloat(amount) * 1000);
-const ynabDateFormat = (date: Date) => dateFormat(date, "yyyy-mm-dd");
+const ynabAmount = (amount: string) =>  {
+  return Math.round(-parseFloat(amount) * 1000)
+}
+
+const ynabDateFormat = (date: string, format: string) => {
+  return moment(date, format).format("YYYY-MM-DD");
+};
+
+const ynabAmountFromGermanMoney = (amount: string) =>  {
+  let noThousandSeparators = amount.replace(/\./g, '');
+
+  let standardizedFormat = noThousandSeparators.replace(',', '.');
+
+  let valueInEuros = parseFloat(standardizedFormat);
+
+  let valueInCents = valueInEuros * -1000;
+
+  return Math.round(valueInCents);
+}
 
 export const deleteTransaction = async (transaction: TransactionDetail) => {
   try {
@@ -81,13 +98,13 @@ export const convertPendingTransactions = (
 
   pendingTransactions.forEach((t) => {
     let amount = ynabAmount(t.amount.toString());
-    const date = ynabDateFormat(new Date(t.charge_date));
+    const date = t.charge_date;
 
     const data: SaveTransaction = {
       account_id: accountId,
       approved: false,
       cleared: "uncleared",
-      payee_name: titleize(t.description).split("  ")[0],
+      payee_name: t.description,
       amount,
       date,
     };
@@ -101,7 +118,7 @@ export const convertPendingTransactions = (
 
     ynabTransactions.push({
       ...data,
-      import_id: `YNAB-pending:${amount}:${date}:${occurrence + 1}`,
+     import_id: `YNAB-pending:${amount}:${date}:${occurrence + 1}`,
     });
   });
   return ynabTransactions;
@@ -116,17 +133,19 @@ export const convertCSV = async (
     const ynabTransactions: SaveTransaction[] = [];
     stream
       .pipe(csv())
-      .on("data", (data) => transactions.push(data))
+      .on("data", (data) => {
+        transactions.push(data);
+      })
       .on("end", () => {
         transactions.forEach((t) => {
-          const amount = ynabAmount(t.Amount);
-          const date = ynabDateFormat(new Date(t.Date));
+          const amount = ynabAmountFromGermanMoney(t.Betrag);
+          const date = ynabDateFormat(t.Datum, "DD/MM/YYYY");
 
           const data: SaveTransaction = {
             account_id: accountId,
             approved: false,
             cleared: "cleared",
-            payee_name: titleize(t.Description).split("  ")[0],
+            payee_name: t.Beschreibung,
             amount,
             date,
           };

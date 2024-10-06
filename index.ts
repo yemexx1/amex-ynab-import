@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 import * as amex from "./amex.js";
 import {
@@ -15,13 +16,30 @@ import fs from "fs";
 import { SaveTransaction, TransactionDetail } from "ynab";
 import stringSimilarity from "string-similarity";
 import { match } from "assert";
+import express from "express";
 
 
 export const formatTransaction = (t: TransactionDetail | SaveTransaction) =>
   `${t.account_id}: $${t.amount! / 1000} at ${t.payee_name} on ${t.date}`;
 
 
-(async () => {
+const app = express();
+
+app.get("/amex", async (req, res) => {
+  try {
+    await run();
+    res.send("Imported transactions");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to import transactions");
+  }
+});
+
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
+
+async function run() {
   try {
     const ynabAccounts = await fetchAccounts();
     const ynabTransactions = await fetchTransactions();
@@ -35,7 +53,7 @@ export const formatTransaction = (t: TransactionDetail | SaveTransaction) =>
 
     for (const amexAccount of amexAccounts) {
       const ynabAccount = ynabAccounts.find(
-        (ynabAccount) => ynabAccount.name === amexAccount.name
+        (ynabAccount) => ynabAccount.name === "Amex Credit Card"
       );
 
       if (!ynabAccount) {
@@ -267,9 +285,8 @@ export const formatTransaction = (t: TransactionDetail | SaveTransaction) =>
     await createTransactions(importTransactions);
 
     console.log("All done. Until next time! 👋");
-    process.exit(0);
   } catch (e) {
     console.error(e);
-    process.exit(1);
   }
-})();
+}
+

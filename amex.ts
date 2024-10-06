@@ -13,16 +13,16 @@ import { Readable } from "stream";
 import Xvfb from "xvfb";
 
 export interface AMEXCSVTransaction {
-  Date: string;
-  Receipt: string;
-  Description: string;
-  Amount: string;
-  "Extended Details": string;
-  "Appears On Your Statement As": string;
-  Address: string;
-  Country: string;
-  Reference: string;
-  Category: string;
+  Datum: string;
+  Beschreibung: string;
+  Betrag: string;
+  "Weitere Details": string;
+  "Erscheint auf Ihrer Abrechnung als": string;
+  Adresse: string;
+  Stadt: string;
+  PLZ: string;
+  Land: string;
+  Betreff: string;
 }
 
 interface Account {
@@ -84,7 +84,7 @@ const downloadCSV = async (
     .split("T")[0];
   const endDate = new Date().toISOString().split("T")[0];
   const csv = await axios.get(
-    `https://global.americanexpress.com/api/servicing/v1/financials/documents?file_format=csv&start_date=${startDate}&end_date=${endDate}&limit=30&status=posted&account_key=${account.key}&client_id=AmexAPI`,
+    `https://global.americanexpress.com/api/servicing/v1/financials/documents?file_format=csv&start_date=${startDate}&end_date=${endDate}&limit=30&status=posted&account_key=${account.key}&client_id=AmexAPI&additional_fields=true`,
     { headers: { ...headers, Cookie: cookiesString } }
   );
   console.log(`[✓] Fetched ${account.name} CSV`);
@@ -217,49 +217,35 @@ export async function fetchTransactions(): Promise<Account[]> {
   }
 
   console.log("Searching/waiting for OTP prompt... (will choose email)");
-  const authDivSelector = 'div[class^="_authContainer_"]';
+  const authDivSelector = 'fieldset[name="otp-channel"]';
   await page.waitForSelector(authDivSelector);
 
   let html = await page.content();
   let $ = load(html);
 
-  let emailAuthBtnIndex: number | undefined;
-  const otpButtonsDOM = $(authDivSelector)
-    .find('button[data-testid="option-button"]')
-    .toArray();
-  for (const [i, button] of otpButtonsDOM.entries()) {
-    const html = $(button).html();
-    if (html && html.includes("One-time password (email)")) {
-      emailAuthBtnIndex = i;
-      break;
-    }
-  }
-
-  if (emailAuthBtnIndex === undefined)
-    throw new Error(
-      "Could not find email choice for OTP option. Is it enabled on your account?"
-    );
-
   const mailbox = new EmailScanner();
   await mailbox.connect();
 
   console.log('Clicking the "Email" OTP button...');
-  const otpButtons = await page.$$(`${authDivSelector} button`);
-  await otpButtons[emailAuthBtnIndex].click();
+  const otpButtons = await page.$$(`${authDivSelector} input[type="radio"]`);
+  await otpButtons[1].click();
+
+  console.log('Clicking the "Submit" button...');
+  await page.click('button[type="submit"]');
 
   const waitForEmail = mailbox.waitForEmail(
     (email: Email) =>
-      email.subject === "Your American Express one-time verification code"
+      email.subject.indexOf("Ihr temporärer American Express") !== -1
   );
 
-  const email = await Promise.race([timeout(60000, false), waitForEmail]);
-  if (!email) throw new Error("OTP email was not received within 60 seconds");
+  const email = await Promise.race([timeout(60000 * 5, false), waitForEmail]);
+  if (!email) throw new Error("OTP email was not received within 5 minutes");
   mailbox.disconnect();
 
   let code: string | undefined;
   $ = load(email.body);
   const text = $("body").text();
-  const textSplit = text.split("One-Time Verification Code:", 2);
+  const textSplit = text.split("Sicherheitscode lautet:", 2);
   if (textSplit.length == 2) {
     const codeString = textSplit[1];
     const codeMatches = codeString.match(/[0-9]+/g) || [];
@@ -269,8 +255,8 @@ export async function fetchTransactions(): Promise<Account[]> {
 
   if (!code) throw new Error("OTP code could not be extracted from email");
 
-  await page.type("#question-value", code);
-  await page.click('button[data-testid="continue-button"]');
+  await page.type("#question-input", code);
+  await page.click('button[type="submit"]');
 
   try {
     const buttonGroupSelector =

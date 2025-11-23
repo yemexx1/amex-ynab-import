@@ -168,6 +168,7 @@ export async function fetchTransactions(): Promise<Account[]> {
     "--no-sandbox",
     "--disable-setuid-sandbox",
     "--start-fullscreen",
+    "--disable-web-security"
   ];
 
   let xvfb;

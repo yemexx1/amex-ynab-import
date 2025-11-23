@@ -1,4 +1,4 @@
-FROM ghcr.io/puppeteer/puppeteer:21.3.8
+FROM ghcr.io/puppeteer/puppeteer:24.31.0
 
 COPY ./ /usr/src/app
 WORKDIR /usr/src/app

@@ -1,0 +1,42 @@
+{
+    "manifest_version": 3,
+    "name": "AMEX → YNAB Import",
+    "version": "1.0.0",
+    "description": "Import AMEX transactions into YNAB directly from Chrome.",
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "48": "icons/icon48.png",
+            "128": "icons/icon128.png"
+        }
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "permissions": [
+        "storage",
+        "scripting",
+        "activeTab",
+        "notifications"
+    ],
+    "host_permissions": [
+        "https://*.americanexpress.com/*",
+        "https://api.youneedabudget.com/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.americanexpress.com/*"
+            ],
+            "js": [
+                "contentScript.js"
+            ]
+        }
+    ],
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+}

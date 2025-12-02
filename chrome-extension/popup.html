@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AMEX → YNAB Import</title>
+  <style>
+    body {font-family: Arial, sans-serif; padding: 10px; width: 300px;}
+    input {width: 100%; margin-bottom: 8px; padding: 4px;}
+    button {width: 100%; padding: 6px;}
+    #status {margin-top: 8px; font-size: 0.9em; color: #555;}
+  </style>
+</head>
+<body>
+  <h3>Import Settings</h3>
+  <input id="ynabKey" placeholder="YNAB API Key" />
+  <input id="budgetId" placeholder="Budget ID" />
+  <input id="amexUser" placeholder="AMEX Username" />
+  <input id="amexPass" type="password" placeholder="AMEX Password" />
+  <button id="startBtn">Start Import</button>
+  <div id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

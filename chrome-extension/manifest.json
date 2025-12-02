@@ -12,13 +12,14 @@
         }
     },
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "dist/background.js"
     },
     "permissions": [
         "storage",
         "scripting",
         "activeTab",
-        "notifications"
+        "notifications",
+        "tabs"
     ],
     "host_permissions": [
         "https://*.americanexpress.com/*",
@@ -30,7 +31,7 @@
                 "https://*.americanexpress.com/*"
             ],
             "js": [
-                "contentScript.js"
+                "dist/contentScript.js"
             ]
         }
     ],
